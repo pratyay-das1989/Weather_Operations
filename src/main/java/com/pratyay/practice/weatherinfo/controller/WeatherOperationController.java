@@ -4,6 +4,11 @@ import com.pratyay.practice.weatherinfo.entity.Weather;
 import com.pratyay.practice.weatherinfo.model.WeatherModel;
 import com.pratyay.practice.weatherinfo.repository.WeatherRepository;
 import com.pratyay.practice.weatherinfo.util.ApplicationUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,13 +27,22 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping("/api/v1")
+@Tag(name = "Weather Operations", description = "APIs for managing weather information")
 public class WeatherOperationController {
 
     private final WeatherRepository weatherRepository;
     private final ApplicationUtil applicationUtil;
 
     @PostMapping("/weather")
-    public ResponseEntity<WeatherModel> createWeather(@Valid @RequestBody WeatherModel weatherModel) {
+    @Operation(summary = "Create a new weather record", description = "Add a new weather information record to the database")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Weather record created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<WeatherModel> createWeather(
+        @Parameter(description = "Weather information to create", required = true)
+        @Valid @RequestBody WeatherModel weatherModel) {
         try {
             log.info("Creating weather record for city: {}", weatherModel.getCity());
             Weather weatherEntity = weatherRepository.save(applicationUtil.convertWeatherModelToWeatherEntity(weatherModel));
@@ -45,6 +59,11 @@ public class WeatherOperationController {
     }
 
     @GetMapping("/weather")
+    @Operation(summary = "Get all weather records", description = "Retrieve all weather information from the database")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved weather records"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public ResponseEntity<List<WeatherModel>> getAllWeatherInfo(){
         try {
             List<WeatherModel> weatherList = weatherRepository.findAll().stream()
@@ -60,7 +79,16 @@ public class WeatherOperationController {
     }
 
     @GetMapping("/weather/{id}")
-    public ResponseEntity<WeatherModel> getWeatherInfo(@PathVariable Integer id){
+    @Operation(summary = "Get weather by ID", description = "Retrieve a specific weather record by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved weather record"),
+        @ApiResponse(responseCode = "400", description = "Invalid ID provided"),
+        @ApiResponse(responseCode = "404", description = "Weather record not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<WeatherModel> getWeatherInfo(
+        @Parameter(description = "ID of the weather record to retrieve", required = true)
+        @PathVariable Integer id){
         try {
             if (id == null || id <= 0) {
                 log.warn("Invalid ID provided: {}", id);
@@ -88,7 +116,16 @@ public class WeatherOperationController {
     }
 
     @DeleteMapping("/weather/{id}")
-    public ResponseEntity<Void> deleteWeatherInfo(@PathVariable Integer id){
+    @Operation(summary = "Delete weather by ID", description = "Delete a specific weather record by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Weather record deleted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid ID provided"),
+        @ApiResponse(responseCode = "404", description = "Weather record not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<Void> deleteWeatherInfo(
+        @Parameter(description = "ID of the weather record to delete", required = true)
+        @PathVariable Integer id){
         try {
             if (id == null || id <= 0) {
                 log.warn("Invalid ID provided for deletion: {}", id);
